@@ -13,7 +13,7 @@ import data
 
 
 overall_title = 'webModel'
-title = 'boringssl_'+overall_title+'_1'
+title = 'boringssl_'+overall_title+'_all'
 
 prefix_pack, postfix_pack, attn_pack = mu.getModel(overall_title, title)
 
