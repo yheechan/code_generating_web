@@ -79,6 +79,8 @@ def generate():
 
     print(result)
 
+    print('-------------------------------------\n')
+
     return result
 
 
