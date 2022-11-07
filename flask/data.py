@@ -111,12 +111,12 @@ def getIdx2str():
 
 
 
-def idx2str(resultsIdx):
+def idx2str(label_results):
     idx2str = getIdx2str()
 
     final = []
 
-    for seq in resultsIdx:
+    for seq in label_results:
         str_list = []
 
         for token in seq:
@@ -126,3 +126,12 @@ def idx2str(resultsIdx):
         final.append(str)
     
     return final
+
+def returnFinalJson(json_data, label_results):
+    finalJson = []
+
+    for seq in label_results:
+        json_data['label-type'] = seq
+        finalJson.append( json_data.copy() )
+    
+    return finalJson
