@@ -7,9 +7,11 @@ import os
 
 ######
 token_list = list()
+text_list = list()
 query_list = list()
 token_dict = dict() 
 dp_token_len = 64
+
 
 #label_len = 8
 label_len = 10
@@ -39,7 +41,7 @@ def line_to_token (s):
 
 	lword = s1[1].find('\'') + 1 
 	rword = s1[1].rfind('\'')
-	t['word'] = s1[1][lword : rword]
+	t['text'] = s1[1][lword : rword]
 
 	lword = s1[1].rfind('Loc=<') + 5
 
@@ -93,12 +95,13 @@ def token_to_query (t):
 
 
 def read_tokens (ftoken):
-	global token_list 
+	global token_list, text_list 
 
 	fp = open(ftoken, 'r')
 	for l in fp:
 		token = line_to_token(l)
 		token_list.append(token)
+		#text_list.append(text)
 		#print(token, end='\n')
 
 
@@ -106,7 +109,7 @@ def read_quries ():
 	global token_list, query_list
 
 	for t in token_list:
-		if t['type'] == 'identifier' and t['word'] == '$$':
+		if t['type'] == 'identifier' and t['text'] == '$$':
 			query_list.append(token_to_query(t))
 
 
@@ -138,7 +141,7 @@ def convert_token (t):
 
 def check_identity (t1, t2):
 	if t1['type'] == t2['type']:
-		if t1['word'] == t2['word']:
+		if t1['text'] == t2['text']:
 			return 1
 	return 0 
 
@@ -153,6 +156,11 @@ def generate_datapoint (query):
 	dp['postfix'] = [ token_dict['@pad'] ] * dp_token_len
 	dp['label-type'] = list()
 	dp['label-type'] = [ token_dict['@pad'] ] * label_len
+	dp['prefix-text'] = list() 
+	dp['prefix-text'] = [ '' ] * dp_token_len 
+	dp['postfix-text'] = list() 
+	dp['postfix-text'] = [ '' ] * dp_token_len 
+
 
 	#dp['label-prefix'] = list()
 	#dp['label-postfix'] = list()
@@ -167,7 +175,7 @@ def generate_datapoint (query):
 	while less_than(token_list[label_begin]['position'], query['begin']):
 		label_begin = label_begin + 1
 
-	label_end = label_begin 
+	label_end = label_begin + 1
 	while less_than(token_list[label_end]['position'], query['end']):
 		label_end = label_end + 1
 
@@ -182,6 +190,7 @@ def generate_datapoint (query):
 		p = dp_token_len - prefix_len
 		for i in range(begin_idx, label_begin):
 			dp['prefix'][p] = convert_token(token_list[i])
+			dp['prefix-text'][p] = token_list[i]['text']
 			#if check_identity(token_list[i], token_list[label_begin]) == 1:
 			#	prefix_point = p 
 			##dp['label-prefix'][0][p] = check_identity(token_list[i], token_list[label_idx])
@@ -200,11 +209,13 @@ def generate_datapoint (query):
 		p = 0
 		for i in range(label_end, label_end + postfix_len):
 			dp['postfix'][p] = convert_token(token_list[i])
+			dp['postfix-text'][p] = token_list[i]['text']
 			#if check_identity(token_list[i], token_list[label_idx]) == 1 and postfix_point == -1:
 			#	postfix_point = p
 			##dp['label-postfix'][0][p] = check_identity(token_list[i], token_list[label_idx])
 			p = p + 1
 	dp['postfix'].reverse()
+	dp['postfix-text'].reverse()
 
 	
 	#if postfix_point != -1:
@@ -235,7 +246,9 @@ def print_datapoint (dp):
 	print("{", end='')
 	print("\"prefix\":" + str(dp['prefix']), end=', ')
 	print("\"postfix\": " + str(dp['postfix']), end=', ') 
-	print("\"label-type\": " + str(dp['label-type']), end='')
+	print("\"label-type\": " + str(dp['label-type']), end=', ')
+	print("\"prefix-text\":" + str(dp['prefix-text']), end=', ')
+	print("\"postfix-text\":" + str(dp['postfix-text']), end ='')
 	print("}", end='\n') 
 	#print("\"label-prefix\": " + str(dp['label-prefix']), end=', ')
 	#print("\"label-postfix\": " + str(dp['label-postfix']), end=', ')
@@ -244,9 +257,6 @@ def print_datapoint (dp):
 
 def main (target):
 	global token_list, query_list, token_dict, dp_token_len, label_len
-
-
-
 
 	argv = ['(',  'clang', '-fsyntax-only', '-Xclang', '-dump-tokens' ] 
 	argv = argv + [target, '2>', '_tokens', ')']

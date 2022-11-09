@@ -130,8 +130,10 @@ def idx2str(label_results):
 def returnFinalJson(json_data, label_results):
     finalJson = []
 
+
     for seq in label_results:
-        json_data['label-type'] = seq
+        json_data['label-type'] = seq + [0]*(10-len(seq))
+        json_data['label-length'] = len(seq)
         finalJson.append( json_data.copy() )
     
     return finalJson

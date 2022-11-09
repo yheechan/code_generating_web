@@ -100,9 +100,12 @@ def predict(prefix, postfix, prefix_pack, postfix_pack, attn_pack):
     torch_scores = torch.FloatTensor(total_seq_score)
     sorted, indices = torch.sort(torch_scores, descending=True)
 
+
     pred_results = []
     for i in range(5):
-        pred_results.append(total_token_seq[indices[i]])
+        # pred_results.append(total_token_seq[indices[i]])
+        ordered_score_idx = indices[i].item()
+        pred_results.append(total_token_seq[ordered_score_idx])
 
     return pred_results
 
@@ -130,42 +133,44 @@ def bean_search(
     score_stack
 ):
 
-    limit += 1
+    prefix_state, postfix_state, \
+    sorted, indices =   return_predictions(
+                            input,
 
+                            prefix_decoder,
+                            postfix_decoder,
 
-    value = input[0].item()
+                            prefix_state,
+                            postfix_state,
 
-    if limit == 10 or value == 1:
+                            attn_model,
 
-        score = log_score(score_stack)
-
-        total_token_seq.append( copy.deepcopy(token_stack) )
-        total_seq_score.append( score )
-
+                            encoder_prefix_hiddens,
+                            encoder_postfix_hiddens,
+                        )
     
-    else:
-        prefix_state, postfix_state, \
-        sorted, indices =   return_predictions(
-                                input,
+    
+    for i in range(2):
+        # token_stack.append(indices[i].item())
+        # score_stack.append(sorted[indices[i]].item())
 
-                                prefix_decoder,
-                                postfix_decoder,
+        input = torch.full((1, 1), indices[i].item()).cpu()
 
-                                prefix_state,
-                                postfix_state,
+        token = input[0].item()
 
-                                attn_model,
 
-                                encoder_prefix_hiddens,
-                                encoder_postfix_hiddens,
-                            )
-        
-        
-        for i in range(2):
-            token_stack.append(indices[i].item())
+        if limit == 10 or token == 0:
+
+            score = log_score(score_stack)
+
+            total_token_seq.append( copy.deepcopy(token_stack) )
+            total_seq_score.append( score )
+
+        else:
+            limit += 1
+
+            token_stack.append(token)
             score_stack.append(sorted[i].item())
-
-            input = torch.full((1, 1), indices[i].item()).cpu()
 
             bean_search(
                 input,
@@ -192,6 +197,10 @@ def bean_search(
             score_stack.pop()
 
 
+
+
+
+
 def log_score(list):
     mul_score = 1
 
@@ -199,7 +208,6 @@ def log_score(list):
         mul_score *= i
     
     log_score = math.log(mul_score)
-
 
     return log_score
 
@@ -229,8 +237,11 @@ def return_predictions(
         decoder_postfix_hiddens
     )
 
-    answer = logits.argmax(1).unsqueeze(1)
+    # get index with highest probability
+    answer = logits.argmax(1).flatten()
 
+    # probability from given indexes
+    # output number is the size
     probs = F.softmax(logits, dim=1).squeeze(dim=0)
 
     sorted, indices = torch.sort(probs, descending=True)
