@@ -2,15 +2,20 @@ import "./App.css";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import React from "react";
-import { StyleSheet, View } from "react-native-web";
+import { StyleSheet, View, Text, TouchableOpacity,} from "react-native-web";
+// import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 function App() {
+
+
   const [value, setValue] = React.useState("");
-  const [translated, setTranslated] = React.useState("");
+  const [translated, setTranslated] = React.useState({});
+
 
   const handleChange = (event) => {
     setValue(event.target.value);
   };
+
 
   const buttonClick = (event) => {
     console.log("button clicked!");
@@ -25,20 +30,19 @@ function App() {
         text: value,
       }),
     })
-      .then((res) => res.text())
+      .then((res) => res.json())
       .then((translated) => {
         setTranslated(translated);
         console.log(translated);
       });
-
-    // alert("작성 완료");
   };
+
 
   const clearClick = (event) => {
     console.log("clear clicked!");
 
     setValue("");
-    setTranslated("");
+    setTranslated({});
   };
 
   const styles = StyleSheet.create({
@@ -49,7 +53,12 @@ function App() {
   });
 
   return (
-    <div>
+    <View style={[styles.container, {
+      // Try setting `flexDirection` to `"row"`.
+      flexDirection: "column",
+      alignItems: "center"
+    }]}>
+
       <div>
         <div
           className="app-header"
@@ -61,70 +70,135 @@ function App() {
         </div>
       </div>
 
-      <div
+
+      <TextField
+        id="outlined-multiline-static"
+        label="Source Code"
+        multiline
+        rows={15}
+        value={value}
+        onChange={handleChange}
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          margin: "1%",
+          width: "70%"
         }}
+      />
+
+
+
+      <View
+        style={[
+          styles.containor,
+          {
+            flexDirection: "column",
+          },
+        ]}
       >
-
-        <TextField
-          id="outlined-multiline-static"
-          label="Texts"
-          multiline
-          rows={15}
-          value={value}
-          onChange={handleChange}
+        <Button
+          variant="contained"
+          onClick={buttonClick}
           style={{
-            width: "100%",
+            margin: "20px",
           }}
-        />
-
-        <View
-          style={[
-            styles.containor,
-            {
-              flexDirection: "column",
-            },
-          ]}
         >
-          <Button
-            variant="contained"
-            onClick={buttonClick}
-            style={{
-              margin: "20px",
-            }}
-          >
-            generate 
-          </Button>
+          generate 
+        </Button>
 
-          <Button
-            variant="contained"
-            onClick={clearClick}
-            style={{
-              margin: "20px",
-            }}
-          >
-            - delete -
-          </Button>
-        </View>
-
-        <TextField
-          id="outlined-multiline-static"
-          // label="Line Breaked Texts"
-          multiline
-          rows={15}
-          defaultValue={translated}
-          inputProps={{
-            readOnly: true,
-          }}
+        <Button
+          variant="contained"
+          onClick={clearClick}
           style={{
-            width: "100%",
+            margin: "20px",
           }}
-        />
-      </div>
-    </div>
+        >
+          - delete -
+        </Button>
+      </View>
+
+
+
+
+      <TextField
+        id="outlined-multiline-static"
+        helperText="Patch #2"
+        rows={1}
+        multiline
+        defaultValue={translated.patch_1}
+        inputProps={{
+          readOnly: true,
+        }}
+        style={{
+          marginTop: "30px",
+          margin: "1%",
+          width: "70%"
+        }}
+      />
+
+      <TextField
+        id="outlined-multiline-static"
+        helperText="Patch #2"
+        rows={1}
+        multiline
+        defaultValue={translated.patch_2}
+        inputProps={{
+          readOnly: true,
+        }}
+        style={{
+          marginTop: "30px",
+          margin: "1%",
+          width: "70%"
+        }}
+      />
+
+      <TextField
+        id="outlined-multiline-static"
+        helperText="Patch #3"
+        rows={1}
+        multiline
+        defaultValue={translated.patch_3}
+        InputProps={{
+          readOnly: true,
+        }}
+        style={{
+          marginTop: "30px",
+          margin: "1%",
+          width: "70%"
+        }}
+      />
+
+      <TextField
+        id="outlined-multiline-static"
+        helperText="Patch #4"
+        rows={1}
+        multiline
+        defaultValue={translated.patch_4}
+        inputProps={{
+          readOnly: true,
+        }}
+        style={{
+          marginTop: "30px",
+          margin: "1%",
+          width: "70%"
+        }}
+      />
+
+      <TextField
+        id="outlined-multiline-static"
+        helperText="Patch #5"
+        rows={1}
+        multiline
+        defaultValue={translated.patch_5}
+        inputProps={{
+          readOnly: true,
+        }}
+        style={{
+          marginTop: "30px",
+          margin: "1%",
+          width: "70%"
+        }}
+      />
+      
+    </View>
   );
 }
 
