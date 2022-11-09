@@ -42,7 +42,13 @@ function App() {
     console.log("clear clicked!");
 
     setValue("");
-    setTranslated({});
+    setTranslated({
+		patch_1: "",
+		patch_2: "",
+		patch_3: "",
+		patch_4: "",
+		patch_5: ""
+	});
   };
 
   const styles = StyleSheet.create({
