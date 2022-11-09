@@ -120,7 +120,7 @@ function App() {
 
       <TextField
         id="outlined-multiline-static"
-        helperText="Patch #2"
+        helperText="Patch #1"
         rows={1}
         multiline
         defaultValue={translated.patch_1}
