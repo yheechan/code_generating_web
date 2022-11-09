@@ -27,6 +27,7 @@ test.py
 __pycache__
 test1.py
 
-flask/c2tok/*tokens
+flask/c2tok/tokens
+flask/c2tok/_tokens
 flask/c2tok/*.c
 flask/identifier_gen/query
