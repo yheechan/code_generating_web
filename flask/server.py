@@ -87,8 +87,9 @@ def generate():
     source_code = webData['text']
 
     fn = makeFile(source_code)
-    
+        
     json_data = getJson(fn)
+
 
     pred_results = predictor.predict(
         json_data['prefix'],
@@ -118,7 +119,13 @@ def generate():
 
     print('-------------------------------------\n')
 
-    return result
+    return {
+        "patch_1": final[0],
+        "patch_2": final[1],
+        "patch_3": final[2],
+        "patch_4": final[3],
+        "patch_5": final[4]
+    }
 
 
 if __name__ == "__main__":
