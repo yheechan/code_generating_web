@@ -111,16 +111,22 @@ def getIdx2str():
 
 
 
-def idx2str(label_results):
+def idx2str(label_results, total_colored):
     idx2str = getIdx2str()
 
     final = []
 
-    for seq in label_results:
+    for i in range(len(label_results)):
         str_list = []
+        seq = label_results[i]
 
-        for token in seq:
-            str_list.append(idx2str[token])
+        for j in range(len(seq)):
+            token_num = seq[j]
+
+            if token_num != 2:
+                str_list.append(idx2str[token_num])
+            elif token_num == 2:
+                str_list.append(total_colored[i][j])
 
         str = ' '.join(str_list) 
         final.append(str)

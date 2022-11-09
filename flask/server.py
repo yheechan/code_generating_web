@@ -47,6 +47,39 @@ def getJson(fn):
     return dict_data
 
 
+def writeJson(json_data):
+    with open('identifier_gen/query', 'w') as f:
+        info = json.dumps(json_data)
+        f.write(info)
+
+def getidentifier2Str(patch_list):
+    genDir = '/home/yangheechan/codeGen_web/flask/identifier_gen'
+    flaskDir = '/home/yangheechan/codeGen_web/flask' 
+
+    label_type = 'label-type'
+
+    total_str = []
+
+    for patch_dict in patch_list:
+        
+        writeJson(patch_dict)
+
+        os.chdir(genDir)
+
+        cmd = 'python3 identifier_gen.py'
+        stdout = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True, encoding='utf-8')
+
+        # prefix, postfix, label-type, prefix-text, postifx-text
+        str_colored = json.dumps(ast.literal_eval(stdout))
+        list_colored = ast.literal_eval(str_colored)
+
+        os.chdir(flaskDir)
+
+        total_str.append(list_colored)
+
+    return total_str
+
+
 @app.route('/server/translate', methods=['POST'])
 def generate():
 
@@ -66,7 +99,8 @@ def generate():
     )
 
     final_json = data.returnFinalJson(json_data, pred_results)
-    final = data.idx2str(pred_results)
+    total_colored = getidentifier2Str(final_json)
+    final = data.idx2str(pred_results, total_colored)
 
     total = []
     for i in range(len(final)):
