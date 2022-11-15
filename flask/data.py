@@ -26,12 +26,14 @@ def getTrainData(proj_list, target_project):
 
     for proj in proj_list:
         
-        if proj == target_project or proj == total_file: continue
+        # if proj == target_project or proj == total_file: continue
+
+        # don't remove target file for training web model
+        if proj == total_file: continue
 
         print('Getting data for \"' + target_project + '\" from \"' + proj + '\"')
 
         with open('../data/' + proj, 'r') as f:
-
             lines = f.readlines()
         
         for line in lines:
@@ -42,9 +44,13 @@ def getTrainData(proj_list, target_project):
             # postfix.append(insertSOSandEOS(json_data['postfix']))
 
             prefix.append(json_data['prefix'])
-            postfix.append(json_data['postfix'])
 
-            label_type.append(insertEOS(json_data['label-type'], json_data['label-len']))
+            postfix_data = json_data['postfix']
+            postfix_data.pop()
+            postfix_data.insert(0, 0)
+            postfix.append(postfix_data)
+
+            label_type.append(json_data['label-type'])
 
             label_len.append(json_data['label-len'])
     
@@ -72,9 +78,13 @@ def getTestData(target_project):
         # postfix.append(insertSOSandEOS(json_data['postfix']))
 
         prefix.append(json_data['prefix'])
-        postfix.append(json_data['postfix'])
 
-        label_type.append(insertEOS(json_data['label-type'], json_data['label-len']))
+        postfix_data = json_data['postfix']
+        postfix_data.pop()
+        postfix_data.insert(0, 0)
+        postfix.append(postfix_data)
+
+        label_type.append(json_data['label-type'])
 
         label_len.append(json_data['label-len'])
     
@@ -143,3 +153,22 @@ def returnFinalJson(json_data, label_results):
         finalJson.append( json_data.copy() )
     
     return finalJson
+
+def strip(label_results):
+    tot_stripped = []
+
+    for i in range(len(label_results)):
+        b4zero = []
+        seq = label_results[i]
+
+        for j in range(len(seq)):
+            token_num = seq[j]
+
+            if token_num == 0:
+                break
+
+            b4zero.append(token_num)
+
+        tot_stripped.append(b4zero) 
+    
+    return tot_stripped

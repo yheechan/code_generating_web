@@ -7,16 +7,28 @@ import os
 import subprocess
 import json
 import ast
+import torch
 
 import model_util as mu
 import predictor
 import data
 
 
-overall_title = 'webModel2'
-title = 'boringssl_'+overall_title+'_2'
+overall_title = 'reModelSeq2Seq_tune'
+title = 'boringssl_'+overall_title+'_tryOVF'
 
-prefix_pack, postfix_pack, attn_pack = mu.getModel(overall_title, title)
+model = mu.getModel(overall_title, title)
+
+
+device = None
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+    print(f'There are {torch.cuda.device_count()} GPU(s) available.')
+    print('Device name:', torch.cuda.get_device_name(0))
+
+else:
+    print('No GPU available, using the CPU instead.')
+    device = torch.device("cpu")
 
 
 def makeFile(source_code):
@@ -52,6 +64,7 @@ def writeJson(json_data):
         info = json.dumps(json_data)
         f.write(info)
 
+
 def getidentifier2Str(patch_list):
     genDir = '/home/yangheechan/codeGen_web/flask/identifier_gen'
     flaskDir = '/home/yangheechan/codeGen_web/flask' 
@@ -82,6 +95,7 @@ def getidentifier2Str(patch_list):
 
 @app.route('/server/translate', methods=['POST'])
 def generate():
+    print('start generate expression')
 
     webData = request.get_json()
     source_code = webData['text']
@@ -91,14 +105,15 @@ def generate():
     json_data = getJson(fn)
 
 
-    pred_results = predictor.predict(
+    pred_results = predictor.myBeamStart(
+        model,
         json_data['prefix'],
         json_data['postfix'],
-        prefix_pack,
-        postfix_pack,
-        attn_pack
+        device=device,
+        beam_width=5
     )
 
+    pred_results = data.strip(pred_results)
     final_json = data.returnFinalJson(json_data, pred_results)
     total_colored = getidentifier2Str(final_json)
     final = data.idx2str(pred_results, total_colored)
