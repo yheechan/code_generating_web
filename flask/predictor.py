@@ -5,6 +5,7 @@ from tqdm.auto import tqdm
 import copy
 
 
+# returns single sequence of token result from model
 def predictNoBeam(
     prefix,
     postfix,
@@ -52,7 +53,8 @@ def predictNoBeam(
 
 
 
-
+# begin beam search algorith on
+# token sequence predicting neural network
 def myBeamStart(
     model,
     prefix,
@@ -71,6 +73,7 @@ def myBeamStart(
     # Y = torch.full((PREFIX.shape[0], 1), 213).to(device).long()
 
 
+	# contains the end result of sequence of tokens
     total_token_seq = list()
     total_seq_score = list()
     token_stack = list()
@@ -85,6 +88,7 @@ def myBeamStart(
     labels = labels.to(device)
 
 
+    # ********************* ENTER BEAM SEARCH RECURSIVE ALGORITHM *********************
     beamSearch(
         model,
 
@@ -100,9 +104,12 @@ def myBeamStart(
         beam_width=beam_width
     )
 
+	# order the token sequence
+	# according to log likelihood
     torch_scores = torch.FloatTensor(total_seq_score)
     sorted, indices = torch.sort(torch_scores, descending=True)
 
+	# save top 5 token sequence
     pred_results = []
     for i in range(5):
         ordered_score_idx = indices[i].item()
@@ -113,6 +120,7 @@ def myBeamStart(
 
 
 
+# beam search algorithm
 def beamSearch(
     model,
     prefix,
@@ -126,15 +134,20 @@ def beamSearch(
     beam_width=2
 ):
 
+	# returns single token prediction sorted in order
     sorted, indices = beamed(model, prefix, postfix, labels)
 
 
+	# predict following token...
+	# with former predicted tokens
     for i in range(beam_width):
+
 
         end_value = indices[i].item()
         end_score = sorted[i].item()
 
-        # if limit == 10 or end_value == 0:
+
+		# end prediction on 10th token
         if limit == 10:
             total_score_tensor = torch.sum(torch.tensor(copy.deepcopy(score_stack)))
             total_seq_score.append(total_score_tensor)
@@ -144,13 +157,12 @@ def beamSearch(
         else:
             limit += 1
 
+			# stack token and its score to sequence
             token_stack.append(end_value)
             token_stack.append(0)
             score_stack.append(end_score)
  
-            labels = torch.tensor(copy.deepcopy(token_stack)).unsqueeze(dim=0).to(
-                next(model.parameters()).device
-            ).long()
+            labels = torch.tensor(copy.deepcopy(token_stack)).unsqueeze(dim=0).to(next(model.parameters()).device).long()
             token_stack.pop()
 
             beamSearch(
@@ -183,7 +195,7 @@ def beamed(model, prefix, postfix, labels):
 
 
 
-
+# beam search from open source tool
 def beam_search(
     model, 
     PREFIX, 

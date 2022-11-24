@@ -3,6 +3,7 @@ import numpy as np
 from collections import deque
 import csv
 
+# ******************* FUNCTIONS UTILIZED IN TRAINING MODEL *******************
 def insertSOSandEOS(tok_list):
     tmp = deque(tok_list)
     tmp.appendleft(213)
@@ -121,6 +122,7 @@ def getIdx2str():
 
 
 
+# ******************* FUNCTIONS UTILIZED IN WEB *******************
 def idx2str(label_results, total_colored):
     idx2str = getIdx2str()
 

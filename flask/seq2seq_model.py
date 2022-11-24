@@ -312,13 +312,13 @@ class MySeq2Seq(nn.Module):
         # gives the first token for each labels in batch
         # 213 is BOS
         # [batch_size, 1]
-        input = torch.full((batch_size, 1), 213).cpu()
+        input = torch.full((batch_size, 1), 213).to(self.device)
 
 
         # [label_len (10 labels), batch_size, output_size (214 token choices)]
         outputs = torch.zeros(
             label_len, batch_size, self.output_size
-        ).cpu()
+        ).to(self.device)
 
 
 
