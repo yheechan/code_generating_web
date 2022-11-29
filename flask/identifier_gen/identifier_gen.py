@@ -17,6 +17,10 @@ import json
 import models
 import models.seq2seq_point_bce
 
+import model_util as mu
+import predictor
+
+
 PROJECT_NAME= 'mutation'
 
 class SingleDatapoint(Dataset):
@@ -77,81 +81,91 @@ def get_random_score(pointer_query):
     return [pre, post]    
 
 def get_pointer_score(pointer_query):
-    model = models.Seq2SeqPointAttnBCE(vocab_size=213, embedding_dim=256, hidden_dim=512)
-    models.init_weights(model)
-    #model = torch.nn.DataParallel(model)
-    model.load_state_dict(torch.load('best.pt'))
+	prefix = pointer_query[0][-64:]
+	postfix = pointer_query[1][-64:]
+	label = [2]
 
-    pointer_query[0] = pointer_query[0][-64:]
-    pointer_query[1] = pointer_query[1][-64:]
+	#FIXME
+	overall_title = "fc3"
+	title = overall_title + "_boringssl"
 
-    testset = SingleDatapoint(pointer_query) 
+	model = mu.getModel(overall_title, title)
 
-    testloader = torch.utils.data.DataLoader(testset, batch_size=1, shuffle=False, num_workers=1, drop_last = False)
-    r = eval_pointer(model, testloader)
-    return r 
+	prefix_likelihood, postfix_likelihood = predictor.predict(prefix, postfix, label, model=model, device=device)
+
+	r = {'prefix-likelihood': prefix_likelihood, 'postfix-likelihood': postfix_likelihood}
+	# r = json.dumps(r)
+
+	return r 
+
 
 def get_fittest_text(pq, pq_text, r):
-    prefix_min_idx = None
-    prefix_min_val = None
+    prefix_max_idx = None
+    prefix_max_val = None
     for i in range(0, 64):
         if pq[0][i] == 2 and pq_text[0][i] != '':
-            if prefix_min_idx == None or r[0][i] < prefix_min_val:
-                prefix_min_idx = i
-                prefix_min_val = r[0][i]
+            if prefix_max_idx == None or r['prefix-likelihood'][i] > prefix_max_val:
+                prefix_max_idx = i
+                prefix_max_val = r['prefix-likelihood'][i]
     
-    postfix_min_idx = None
-    postfix_min_val = None
+    postfix_max_idx = None
+    postfix_max_val = None
     for i in range(0, 64):
         if pq[1][i] == 2 and pq_text[1][i] != '':
-            if postfix_min_idx == None or r[1][i] < postfix_min_val:
-                postfix_min_idx = i
-                postfix_min_val = r[1][i]
+            if postfix_max_idx == None or r['postfix-likelihood'][i] > postfix_max_val:
+                postfix_max_idx = i
+                postfix_max_val = r['postfix-likelihood'][i]
    
-    if prefix_min_val == None and postfix_min_val == None:
+    if prefix_max_val == None and postfix_max_val == None:
         return '$$'
-    elif prefix_min_val != None and postfix_min_val == None:
-        return pq_text[0][prefix_min_idx]
-    elif prefix_min_val == None and postfix_min_val != None:
-        return pq_text[1][postfix_min_idx] 
-    elif prefix_min_val < postfix_min_val:
-        return pq_text[0][prefix_min_idx]
+    elif prefix_max_val != None and postfix_max_val == None:
+        return pq_text[0][prefix_max_idx]
+    elif prefix_max_val == None and postfix_max_val != None:
+        return pq_text[1][postfix_max_idx] 
+    elif prefix_max_val > postfix_max_val:
+        return pq_text[0][prefix_max_idx]
     else:
-        return pq_text[1][postfix_min_idx]
+        return pq_text[1][postfix_max_idx]
     return '$$'
 
 #######
 
 if __name__ == '__main__':
-    os.environ["CUDA_VISIBLE_DEVICES"]=""
+    #FIXME
+    # os.environ["CUDA_VISIBLE_DEVICES"]=""
 
-    q = read_query_file('query')
+	if torch.cuda.is_available():
+		device = torch.device("cuda")
+	else:
+		device = torch.device("cpu")
+	
+	q = read_query_file('query')
 
-    label_seq = q['label-type'][0:q['label-length']]
-    label_seq.reverse()
-    pq = [q['prefix'], q['postfix'] + label_seq, [], [0] * 64, [0] * 64, 2]
-    pq_text = [q['prefix-text'], q['postfix-text'] + [''] * q['label-length']]
+	label_seq = q['label-type'][0:q['label-length']]
+	label_seq.reverse()
+	pq = [q['prefix'], q['postfix'] + label_seq, [], [0] * 64, [0] * 64, 2]
+	pq_text = [q['prefix-text'], q['postfix-text'] + [''] * q['label-length']]
 
-    label_text = [''] * 10
-    
-    #for i in range(0, 1):
-    for i in range(0, int(q['label-length'])):
-        if q['label-type'][i] == 2:
-            pq[2] = pq[1][-1] 
-            pq[1].pop()
-            pq_text[1].pop()
-            #r = get_pointer_score(pq)
-            r = get_random_score(pq)
-            text = get_fittest_text(pq, pq_text, r)
-            label_text[i] = text
-            pq[0].append(pq[2])
-            pq_text[0].append(text)
-            #q['label-text'].append = text
-        else:
-            pq[1].pop()
-            pq[0].append('')
-            #q['label-text'].append('')
-            label_text[i] = '' 
+	label_text = [''] * 10
 
-    #ps = get_pointer_score(pointer_query) 
-    print(label_text)
+	#for i in range(0, 1):
+	for i in range(0, int(q['label-length'])):
+		if q['label-type'][i] == 2:
+			pq[2] = pq[1][-1] 
+			pq[1].pop()
+			pq_text[1].pop()
+			r = get_pointer_score(pq)
+			#r = get_random_score(pq)
+			text = get_fittest_text(pq, pq_text, r)
+			label_text[i] = text
+			pq[0].append(pq[2])
+			pq_text[0].append(text)
+			#q['label-text'].append = text
+		else:
+			to_prefix = pq[1].pop()
+			pq[0].append(to_prefix)
+			#q['label-text'].append('')
+			label_text[i] = '' 
+
+	#ps = get_pointer_score(pointer_query) 
+	print(label_text)

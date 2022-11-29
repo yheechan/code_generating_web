@@ -33,3 +33,4 @@ flask/c2tok/*.c
 flask/identifier_gen/query
 
 test/
+git_projects/
